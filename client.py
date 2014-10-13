@@ -34,21 +34,21 @@ def send_update(list):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
 	s.send(json.dumps(list))
-	responses_str = s.recv(1024)
-	responses = json.loads(responses_str)
-	for response in responses:
-		command = response['command']
-		if command == 'delete':
-			continue
-		else:
-			filenames = response['filename']
+	# responses_str = s.recv(1024)
+	# responses = json.loads(responses_str)
+	# for response in responses:
+	# 	command = response['command']
+	# 	if command == 'delete':
+	# 		continue
+	# 	else:
+	# 		filenames = response['filename']
 			# ngirim file
 	s.close()
 
 def check_for_update(list):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
-	s.send(json.dumps(list))
+	# s.send(json.dumps(list))
 	# to do
 
 	s.close()
@@ -82,6 +82,6 @@ if __name__ == "__main__":
 				send_update(difference)
 				break
 
-		check_for_update(difference)
+		# check_for_update(difference)
 
 		time.sleep(0.1)
