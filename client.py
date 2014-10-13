@@ -30,6 +30,25 @@ def diff(dir_base, dir_cmp):
 			data['updated'].append(f)
 	return data
 
+def send_update(list):
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((HOST, PORT))
+	s.send(json.dumps(list))
+	respond = s.recv(1024)
+	# to do, act accordingly, send file to server or delete
+
+	s.close()
+
+def check_for_update(list):
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s.connect((HOST, PORT))
+	# to do
+
+	s.close()
+
+HOST = ''
+PORT = 8888
+
 # main program starts here
 if __name__ == "__main__":
 
@@ -56,9 +75,9 @@ if __name__ == "__main__":
 			if difference[x]:
 				old = new
 				print 'Update detected!'
-				s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				s.connect((HOST, PORT))
-				s.send(json.dumps(difference))
-				s.close()
+				send_update(difference)
+				break
 
-		time.sleep(0.2)
+		check_for_update(difference)
+
+		time.sleep(0.1)
