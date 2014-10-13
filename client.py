@@ -34,14 +34,21 @@ def send_update(list):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
 	s.send(json.dumps(list))
-	respond = s.recv(1024)
-	# to do, act accordingly, send file to server or delete
-
+	responses_str = s.recv(1024)
+	responses = json.loads(responses_str)
+	for response in responses:
+		command = response['command']
+		if command == 'delete':
+			continue
+		else:
+			filenames = response['filename']
+			# ngirim file
 	s.close()
 
 def check_for_update(list):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
+	s.send(json.dumps(list))
 	# to do
 
 	s.close()
@@ -60,9 +67,6 @@ if __name__ == "__main__":
 	# get server address
 	HOST = sys.argv[1]
 	PORT = int(sys.argv[2])
-
-	# open socket
-
 	PATH = '/tmp/test_tracking'
 	
 	old = index(PATH)
