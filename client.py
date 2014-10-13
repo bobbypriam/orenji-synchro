@@ -63,12 +63,26 @@ if __name__ == "__main__":
 	if len(sys.argv) != 3:
 		print "Usage: python client.py <host> <port>"
 		sys.exit
-
+	
+	# monitoring directory
+	err = 'File config.txt does not exist. Create a new one.';
+	
+	if not os.path.isfile('config.txt'):
+		print err
+	else:
+		with open('config.txt') as f:
+			directory = f.read();
+			print 'Monitoring directory ', directory
+	# apakah ada sejumlah n+1 config.txt jika ada n client dan 1 server? kemudian client mengirimkan config.txt ke server dan dicocokkan apakah sama?
+	# isi config selain direktori, termasuk file-filenya nggak? soalnya aku mikirnya file-file sudah di-handle di difference...?
+	# masih bingung >_<
+	
 	# get server address
 	HOST = sys.argv[1]
 	PORT = int(sys.argv[2])
-	PATH = '/tmp/test_tracking'
 	
+	PATH = '/tmp/test_tracking'
+	#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
 	old = index(PATH)
 
 	while True:
