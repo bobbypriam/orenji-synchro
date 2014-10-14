@@ -41,8 +41,8 @@ def sendupdate(filelist, conn):
 
 			# send in packet of 1024 bytes each, with first packet 
 			# contains file size
-			_data = os.path.getsize(os.path.join(PATH, responses['content'])) - 1
-			while _data:
+			_data = os.path.getsize(os.path.join(PATH, responses['content']))
+			while _data != '':
 				print 'SENDING DATA :', str(_data)
 				conn.send(str(_data))
 				_data = _file.read(1024)
