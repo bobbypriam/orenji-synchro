@@ -54,6 +54,22 @@ if __name__ == "__main__":
 
 	try:
 
+		# monitoring directory	
+		directory = ''
+		if not os.path.isfile('.config'):
+			print 'File .config does not exist. Create a new one'
+			directory = raw_input('Please write the directory: ')
+			config = open('.config', 'w')
+			config.write(directory)
+			config.close()
+			print '.config is successfully created. Your shared directory is', directory
+
+		with open('.config') as f:
+			directory = f.read();
+			print 'Monitoring directory ', directory
+
+		PATH = directory
+		
 		# create socket
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
