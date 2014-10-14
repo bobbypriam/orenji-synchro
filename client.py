@@ -170,6 +170,7 @@ if __name__ == "__main__":
 		directory = raw_input('Please write the directory: ')
 		config = open('.config', 'w')
 		config.write(directory)
+		config.close()
 		print '.config is successfully created. Your shared directory is', directory
 	
 	with open('.config') as f:
