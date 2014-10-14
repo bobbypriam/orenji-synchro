@@ -13,6 +13,9 @@ try:
 except IOError:
 	print "You are not connected to LAN!"
 	quit()
+except AttributeError:
+	print "You are running on Windows. Please specify your ethernet IP Address (check via ipconfig):",
+	HOST = raw_input()
 
 PORT = 8888
 PATH = '/tmp/test_trackin/'
