@@ -6,35 +6,9 @@ import time
 
 import osutil
 
-def index(path):
-	""" Return a tuple containing:
-	- list of files (relative to path)
-	- list of subdirs (relative to path)
-	- a dict: filepath => last modified
-	"""
-	files = []
-	subdirs = []
-	for root, dirs, filenames in os.walk(path):
-		for subdir in dirs:
-			subdirs.append(os.path.relpath(os.path.join(root, subdir), path))
-		for f in filenames:
-			files.append(os.path.relpath(os.path.join(root, f), path))
-	index = {}
-	for f in files:
-		index[f] = os.path.getmtime(os.path.join(path, f))
-	
-	return dict(files=files, subdirs=subdirs, index=index)
-
-def diff(dir_base, dir_cmp):
-	data = {}
-	data['deleted'] = list(set(dir_cmp['files']) - set(dir_base['files']))
-	data['created'] = list(set(dir_base['files']) - set(dir_cmp['files']))
-	data['updated'] = []
-	data['deleted_dirs'] = list(set(dir_cmp['subdirs']) - set(dir_base['subdirs']))
-	for f in set(dir_cmp['files']).intersection(set(dir_base['files'])):
-		if dir_base['index'][f] != dir_cmp['index'][f]:
-			data['updated'].append(f)
-	return data
+HOST = ''
+PORT = 8888
+PATH = '/tmp/test_tracking/'
 
 def sendupdate(filelist):
 	# open connection to server
@@ -42,16 +16,16 @@ def sendupdate(filelist):
 	s.connect((HOST, PORT))
 
 	# send update message to server
-	msg 				= {}
-	msg['type'] 		= 'SENDUPDATE'
-	msg['content'] 		= filelist
+	msg                 = {}
+	msg['type']         = 'SENDUPDATE'
+	msg['content']         = filelist
 	s.send(json.dumps(msg))
 
 	# waiting response from server
 	while True:
-		responses_str 	= s.recv(1024)
+		responses_str     = s.recv(1024)
 		print responses_str
-		responses 		= json.loads(responses_str)
+		responses         = json.loads(responses_str)
 
 		# handle file request from server
 		if responses['type'] == 'REQFILES':
@@ -77,14 +51,108 @@ def sendupdate(filelist):
 def checkupdate(filelist):
 	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	s.connect((HOST, PORT))
-	# s.send(json.dumps(list))
-	# to do
+
+	# send update message to server
+	msg                 = {}
+	msg['type']         = 'CHECKUPDATE'
+	msg['content']         = filelist
+	s.send(json.dumps(msg))
+	
+	# waiting response from server
+	while True:
+		responses_str     = s.recv(1024)
+		try:
+			msg             = json.loads(responses_str)
+		except:
+			msg             = {}
+			msg['type']     = "DONE"
+			msg['content']  = ''
+
+		if (msg['type'] == "DONE"):
+			break
+
+		elif (msg['type'] == 'NEEDUPDATE'):
+			update = msg['content']
+			# delete 
+			if update['deleted']:
+				osutil.removefiles(PATH, update['deleted'])
+				print '- SYNC DELETED :' + str(update['deleted'])
+
+			# update and create basicly same
+			if update['created']:
+				for _file in update['created']:
+
+					# request the file
+					reqmsg              = {}
+					reqmsg['type']      = 'REQFILES'
+					reqmsg['content']   = _file
+
+					s.send(json.dumps(reqmsg))
+
+					# create subdirectory if needed
+					_dir = os.path.dirname(_file)
+					if _dir:
+						osutil.createdir(PATH, _dir)
+
+					# write the file for each packet sent (1024 bytes each)
+					_f          = open(os.path.join(PATH, _file), 'r+w+b')
+					_datasize   = int(s.recv(1024))                      # get data size
+					_dataget    = 0
+					while _dataget < _datasize:                             # there is data left to get
+						_data = s.recv(1024)                             # acquire next packet
+						print "SYNC DATA RECEIVED :", _data
+						_f.write(_data)                                     # write in binaries
+
+						_dataget += 1024 
+
+					 # end writing file
+					_f.close()
+
+				print '- SYNC CREATED :' + str(update['created'])
+
+			# update and create basicly same
+			if update['updated']:
+				for _file in update['updated']:
+					# request the file
+					reqmsg              = {}
+					reqmsg['type']      = 'REQFILES'
+					reqmsg['content']   = _file
+
+					s.send(json.dumps(reqmsg))
+
+					# create subdirectory if needed
+					_dir = os.path.dirname(_file)
+					if _dir:
+						osutil.createdir(PATH, _dir)
+
+					# write the file for each packet sent (1024 bytes each)
+					_f          = open(os.path.join(PATH, _file), 'w+b')
+					_datasize   = int(s.recv(1024))                      # get data size
+					_dataget    = 0
+					while _dataget < _datasize:                             # there is data left to get
+						_data = s.recv(1024)                             # acquire next packet
+						_f.write(_data)                                     # write in binaries
+
+						_dataget += 1024
+
+					 # end writing file
+					_f.close()
+
+				print '- SYNC UPDATED :' + str(update['updated'])
+
+			# delete directories
+			if update['deleted_dirs']:
+				print '- SYNC DELETED DIRS :' + str(update['deleted_dirs'])
+				osutil.removedirs(PATH, update['deleted_dirs'])
+			
+			# send DONE respond to inform client 
+			msg             = {}
+			msg['type']     = 'DONE'
+			msg['content']  = ''
+			s.send(json.dumps(msg))
+
 
 	s.close()
-
-HOST = ''
-PORT = 8888
-PATH = ''
 
 # main program starts here
 if __name__ == "__main__":
@@ -113,11 +181,11 @@ if __name__ == "__main__":
 			
 			PATH = directory
 			#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
-			old = index(PATH)
+			old = osutil.index(PATH)
 
 			while True:
-				new = index(PATH)
-				difference = diff(new, old)
+				new = osutil.index(PATH)
+				difference = osutil.diff(new, old)
 
 				for x in difference:
 					if difference[x]:
@@ -126,6 +194,6 @@ if __name__ == "__main__":
 						sendupdate(difference)
 						break
 
-				# check_for_update(difference)
+				checkupdate(new)
 
 				time.sleep(0.1)
