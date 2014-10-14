@@ -26,14 +26,14 @@ def removedirs(path, dirs):
         files = os.listdir(os.path.join(path, _dir))
         for _file in files:
             if _file == '.' or _file == '..': continue
-            filepath = os.path.join(_dir, os.sep, _file)
+            filepath = os.path.join(_dir, _file)
             if os.path.isdir(os.path.join(path, filepath)):
                 removedirs(path, filepath)
             else:
                 os.unlink(os.path.join(path, filepath))
 
         #remove dir
-        os.rmdir(path + _dir)
+        os.rmdir(os.path.join(path, _dir))
 
 # create directory if isn't exist
 def createdir(path, directory):
