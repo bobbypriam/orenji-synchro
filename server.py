@@ -74,6 +74,7 @@ if __name__ == "__main__":
 						_dataget 	= 0
 						while _dataget < _datasize:								# there is data left to get
 							_data = conn.recv(1024)								# acquire next packet
+							print "DATA RECEIVED :", _data
 							_f.write(_data)										# write in binaries
 
 							_dataget += 1024 

@@ -50,6 +50,7 @@ def sendupdate(filelist):
 	# waiting response from server
 	while True:
 		responses_str 	= s.recv(1024)
+		print responses_str
 		responses 		= json.loads(responses_str)
 
 		# handle file request from server
@@ -58,10 +59,11 @@ def sendupdate(filelist):
 
 			# send in packet of 1024 bytes each, with first packet 
 			# contains file size
-			_data = os.path.getsize(os.path.join(PATH, responses['content']))
+			_data = os.path.getsize(os.path.join(PATH, responses['content'])) - 1
 			while _data:
-			    s.send(str(_data))
-			    _data = _file.read(1024)
+				print 'SENDING DATA :', str(_data)
+				s.send(str(_data))
+				_data = _file.read(1024)
 
 			_file.close()
 
