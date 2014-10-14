@@ -32,11 +32,12 @@ def removedirs(path, dirs):
 					removedirs(path, filepath)
 				else:
 					os.unlink(os.path.join(path, filepath))
+
+			#remove dir
+			os.rmdir(os.path.join(path, _dir))
 		except:
 			pass
 			
-		#remove dir
-		os.rmdir(os.path.join(path, _dir))
 
 # create directory if isn't exist
 def createdir(path, directory):
