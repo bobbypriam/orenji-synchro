@@ -33,8 +33,9 @@ def sendupdate(filelist):
 
 			# send in packet of 1024 bytes each, with first packet 
 			# contains file size
-			_data = os.path.getsize(os.path.join(PATH, responses['content'])) - 1
-			while _data:
+			_data = os.path.getsize(os.path.join(PATH, responses['content']))
+			while _data != "":
+				time.sleep(0.1)
 				print 'SENDING DATA :', str(_data)
 				s.send(str(_data))
 				_data = _file.read(1024)
@@ -95,7 +96,7 @@ def checkupdate(filelist):
 						osutil.createdir(PATH, _dir)
 
 					# write the file for each packet sent (1024 bytes each)
-					_f          = open(os.path.join(PATH, _file), 'r+w+b')
+					_f          = open(os.path.join(PATH, _file), 'w+b')
 					_datasize   = int(s.recv(1024))                      # get data size
 					_dataget    = 0
 					while _dataget < _datasize:                             # there is data left to get
