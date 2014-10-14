@@ -8,15 +8,16 @@ import time
 import osutil 
 
 # configuration
-try:
-	HOST = osutil.get_ip_address('eth0')
-except IOError:
-	print "You are not connected to LAN!"
-	quit()
-except AttributeError:
-	print "You are running on Windows. Please specify your ethernet IP Address (check via ipconfig):",
-	HOST = raw_input()
+# try:
+# 	HOST = osutil.get_ip_address('eth0')
+# except IOError:
+# 	print "You are not connected to LAN!"
+# 	quit()
+# except AttributeError:
+# 	print "You are running on Windows. Please specify your ethernet IP Address (check via ipconfig):",
+# 	HOST = raw_input()
 
+HOST = ''
 PORT = 8888
 PATH = '/tmp/test_trackin/'
 
@@ -80,13 +81,18 @@ if __name__ == "__main__":
 		youstupid = True
 		while youstupid:
 			try:
+				print "Please insert host number:",
+				HOST = raw_input()
 				print "Please insert port number:",
 				PORT = int(raw_input())
 				# bind
 				s.bind((HOST, PORT))
 				youstupid = False
-			except socket.error:
-				print "Error: Port is unusable.\n"
+			except socket.error, msg:
+				if msg[0] == 13:
+					print "Error: Port is unusable.\n"
+				elif msg[0] == 99:
+					print "Error: Cannot assign requested host.\n"
 			except ValueError:
 				print "Error: Port must be a number.\n"
 
