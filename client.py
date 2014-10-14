@@ -64,24 +64,24 @@ if __name__ == "__main__":
 		print "Usage: python client.py <host> <port>"
 		sys.exit
 	
-	# monitoring directory
-	err = 'File config.txt does not exist. Create a new one.';
-	
-	if not os.path.isfile('config.txt'):
-		print err
+	# monitoring directory	
+	directory = ''
+	if not os.path.isfile('.config'):
+		print 'File .config does not exist. Create a new one'
+		directory = raw_input('Please write the directory: ')
+		config = open('.config', 'w')
+		config.write(directory)
+		print '.config is successfully created. Your shared directory is', directory
 	else:
-		with open('config.txt') as f:
+		with open('.config') as f:
 			directory = f.read();
 			print 'Monitoring directory ', directory
-	# apakah ada sejumlah n+1 config.txt jika ada n client dan 1 server? kemudian client mengirimkan config.txt ke server dan dicocokkan apakah sama?
-	# isi config selain direktori, termasuk file-filenya nggak? soalnya aku mikirnya file-file sudah di-handle di difference...?
-	# masih bingung >_<
 	
 	# get server address
 	HOST = sys.argv[1]
 	PORT = int(sys.argv[2])
 	
-	PATH = '/tmp/test_tracking'
+	PATH = directory
 	#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
 	old = index(PATH)
 
