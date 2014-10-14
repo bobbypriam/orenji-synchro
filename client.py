@@ -157,45 +157,48 @@ def checkupdate(filelist):
 
 # main program starts here
 if __name__ == "__main__":
-
-	# check program arguments
-	if len(sys.argv) != 3:
-		print "Usage: python client.py <host> <port>"
-		quit()
-	
-	# monitoring directory	
-	directory = ''
-	if not os.path.isfile('.config'):
-		print 'File .config does not exist. Create a new one'
-		directory = raw_input('Please write the directory: ')
-		config = open('.config', 'w')
-		config.write(directory)
-		config.close()
-		print '.config is successfully created. Your shared directory is', directory
-	
-	with open('.config') as f:
-		directory = f.read();
-		print 'Monitoring directory ', directory
-
-		# get server address
-		HOST = sys.argv[1]
-		PORT = int(sys.argv[2])
+	try:
+		# check program arguments
+		if len(sys.argv) != 3:
+			print "Usage: python client.py <host> <port>"
+			quit()
 		
-		PATH = directory
-		#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
-		old = osutil.index(PATH)
+		# monitoring directory	
+		directory = ''
+		if not os.path.isfile('.config'):
+			print 'File .config does not exist. Create a new one'
+			directory = raw_input('Please write the directory: ')
+			config = open('.config', 'w')
+			config.write(directory)
+			config.close()
+			print '.config is successfully created. Your shared directory is', directory
+		
+		with open('.config') as f:
+			directory = f.read();
+			print 'Monitoring directory ', directory
 
-		while True:
-			new = osutil.index(PATH)
-			difference = osutil.diff(new, old)
+			# get server address
+			HOST = sys.argv[1]
+			PORT = int(sys.argv[2])
+			
+			PATH = directory
+			#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
+			old = osutil.index(PATH)
 
-			for x in difference:
-				if difference[x]:
-					old = new
-					print 'Update detected!'
-					sendupdate(difference)
-					break
+			while True:
+				new = osutil.index(PATH)
+				difference = osutil.diff(new, old)
 
-			checkupdate(new)
+				for x in difference:
+					if difference[x]:
+						old = new
+						print 'Update detected!'
+						sendupdate(difference)
+						break
 
-			time.sleep(0.1)
+				checkupdate(new)
+
+				time.sleep(0.1)
+	except KeyboardInterrupt:
+		print('\nKeyboard interrupt detected. Exiting gracefully...\n')
+		quit()
