@@ -23,7 +23,7 @@ def removedirs(path, dirs):
             _dir = _dir[:-1]
 
         # nuke the files!
-        files = os.listdir(path + _dir)
+        files = os.listdir(os.path.join(path, _dir))
         for _file in files:
             if _file == '.' or _file == '..': continue
             filepath = os.path.join(_dir, os.sep, _file)
