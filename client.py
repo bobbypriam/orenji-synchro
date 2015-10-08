@@ -29,9 +29,9 @@ def sendupdate(filelist):
 
 		# handle file request from server
 		if responses['type'] == 'REQFILES':
-			_file = open (os.path.join(PATH, responses['content']), "rb") 
+			_file = open (os.path.join(PATH, responses['content']), "rb")
 
-			# send in packet of 1024 bytes each, with first packet 
+			# send in packet of 1024 bytes each, with first packet
 			# contains file size
 			_data = os.path.getsize(os.path.join(PATH, responses['content']))
 			while _data != "":
@@ -58,7 +58,7 @@ def checkupdate(filelist):
 	msg['type']         = 'CHECKUPDATE'
 	msg['content']         = filelist
 	s.send(json.dumps(msg))
-	
+
 	# waiting response from server
 	while True:
 		responses_str     = s.recv(1024)
@@ -74,7 +74,7 @@ def checkupdate(filelist):
 
 		elif (msg['type'] == 'NEEDUPDATE'):
 			update = msg['content']
-			# delete 
+			# delete
 			if update['deleted']:
 				osutil.removefiles(PATH, update['deleted'])
 				print '- SYNC DELETED :' + str(update['deleted'])
@@ -104,7 +104,7 @@ def checkupdate(filelist):
 						print "SYNC DATA RECEIVED :", _data
 						_f.write(_data)                                     # write in binaries
 
-						_dataget += 1024 
+						_dataget += 1024
 
 					 # end writing file
 					_f.close()
@@ -145,8 +145,8 @@ def checkupdate(filelist):
 			if update['deleted_dirs']:
 				print '- SYNC DELETED DIRS :' + str(update['deleted_dirs'])
 				osutil.removedirs(PATH, update['deleted_dirs'])
-			
-			# send DONE respond to inform client 
+
+			# send DONE respond to inform client
 			msg             = {}
 			msg['type']     = 'DONE'
 			msg['content']  = ''
@@ -162,8 +162,8 @@ if __name__ == "__main__":
 		if len(sys.argv) != 3:
 			print "Usage: python client.py <host> <port>"
 			quit()
-		
-		# monitoring directory	
+
+		# monitoring directory
 		directory = ''
 		if not os.path.isfile('.config'):
 			print 'File .config does not exist. Create a new one'
@@ -172,7 +172,7 @@ if __name__ == "__main__":
 			config.write(directory)
 			config.close()
 			print '.config is successfully created. Your shared directory is', directory
-		
+
 		with open('.config') as f:
 			directory = f.read();
 			print 'Monitoring directory ', directory
@@ -180,9 +180,8 @@ if __name__ == "__main__":
 			# get server address
 			HOST = sys.argv[1]
 			PORT = int(sys.argv[2])
-			
+
 			PATH = directory
-			#PATH = 'C:\Users\Lenovo Z480\Documents\UI Semester 5\Jaringan Komputer\Temp'
 			old = osutil.index(PATH)
 
 			while True:

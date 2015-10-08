@@ -5,17 +5,7 @@ import os
 import thread
 import time
 
-import osutil 
-
-# configuration
-# try:
-# 	HOST = osutil.get_ip_address('eth0')
-# except IOError:
-# 	print "You are not connected to LAN!"
-# 	quit()
-# except AttributeError:
-# 	print "You are running on Windows. Please specify your ethernet IP Address (check via ipconfig):",
-# 	HOST = raw_input()
+import osutil
 
 HOST = ''
 PORT = 8888
@@ -37,9 +27,9 @@ def sendupdate(filelist, conn):
 
 		# handle file request from client
 		if responses['type'] == 'REQFILES':
-			_file = open (os.path.join(PATH, responses['content']), "rb") 
+			_file = open (os.path.join(PATH, responses['content']), "rb")
 
-			# send in packet of 1024 bytes each, with first packet 
+			# send in packet of 1024 bytes each, with first packet
 			# contains file size
 			_data = os.path.getsize(os.path.join(PATH, responses['content']))
 			while _data != '':
@@ -53,12 +43,127 @@ def sendupdate(filelist, conn):
 		if responses['type'] == 'DONE':
 			break
 
+# client thread function
+def clientthread(conn):
+
+	while True:
+		msg_str = conn.recv(1024)
+
+		try:
+			msg             = json.loads(msg_str)
+		except:
+			msg             = {}
+			msg['type']     = "DONE"
+			msg['content']  = ''
+
+		# respond based on type
+		# receive update from client
+		if (msg['type'] == 'SENDUPDATE'):
+			update = msg['content']
+			# update the folder based on client update
+			# some functions are from osutil.py
+
+			# delete
+			if update['deleted']:
+				osutil.removefiles(PATH, update['deleted'])
+				print '- DELETED :' + str(update['deleted'])
+
+			# update and create basicly same
+			if update['created']:
+				for _file in update['created']:
+
+					# request the file
+					reqmsg              = {}
+					reqmsg['type']      = 'REQFILES'
+					reqmsg['content']   = _file
+
+					conn.send(json.dumps(reqmsg))
+
+					# create subdirectory if needed
+					_dir = os.path.dirname(_file)
+					if _dir:
+						osutil.createdir(PATH, _dir)
+
+					# write the file for each packet sent (1024 bytes each)
+					_f          = open(os.path.join(PATH, _file), 'w+b')
+					_datasize   = int(conn.recv(1024))                      # get data size
+					_dataget    = 0
+					while _dataget < _datasize:                             # there is data left to get
+						_data = conn.recv(1024)                             # acquire next packet
+						print "DATA RECEIVED :", _data
+						_f.write(_data)                                     # write in binaries
+
+						_dataget += 1024
+
+					 # end writing file
+					_f.close()
+
+				print '- CREATED :' + str(update['created'])
+
+			# update and create basicly same
+			if update['updated']:
+				for _file in update['updated']:
+					# request the file
+					reqmsg              = {}
+					reqmsg['type']      = 'REQFILES'
+					reqmsg['content']   = _file
+
+					conn.send(json.dumps(reqmsg))
+
+					# create subdirectory if needed
+					_dir = os.path.dirname(_file)
+					if _dir:
+						osutil.createdir(PATH, _dir)
+
+					# write the file for each packet sent (1024 bytes each)
+					_f          = open(os.path.join(PATH, _file), 'w+b')
+					_datasize   = int(conn.recv(1024))                      # get data size
+					_dataget    = 0
+					while _dataget < _datasize:                             # there is data left to get
+						_data = conn.recv(1024)                             # acquire next packet
+						_f.write(_data)                                     # write in binaries
+
+						_dataget += 1024
+
+					 # end writing file
+					_f.close()
+
+				print '- UPDATED :' + str(update['updated'])
+
+			# delete directories
+			if update['deleted_dirs']:
+				print '- DELETED DIRS :' + str(update['deleted_dirs'])
+				osutil.removedirs(PATH, update['deleted_dirs'])
+
+			# send DONE respond to inform client
+			msg             = {}
+			msg['type']     = 'DONE'
+			msg['content']  = ''
+
+			conn.send(json.dumps(msg))
+
+		# receive update from client
+		elif (msg['type'] == 'CHECKUPDATE'):
+			servercontent = osutil.index(PATH)
+			difference = osutil.diff(servercontent, msg['content'])
+
+			for x in difference:
+				if difference[x]:
+					print 'Update on server detected!'
+					sendupdate(difference, conn)
+					break
+			msg             = {}
+			msg['type']     = 'DONE'
+			msg['content']  = ''
+
+			conn.send(json.dumps(msg))
+
 # main program starts here
 if __name__ == "__main__":
 
 	try:
 
-		# monitoring directory	
+		# monitoring directory
 		directory = ''
 		if not os.path.isfile('.config'):
 			print 'File .config does not exist. Create a new one'
@@ -73,7 +178,7 @@ if __name__ == "__main__":
 			print 'Monitoring directory ', directory
 
 		PATH = directory
-		
+
 		# create socket
 		s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -101,127 +206,12 @@ if __name__ == "__main__":
 		print 'Server opened on on host', HOST, 'port ' + str(PORT)
 		print 'Server ready, now listening ...'
 
-		# client thread function
-		def clientthread(conn):
-
-			while True:
-				msg_str = conn.recv(1024)
-
-				try:
-					msg             = json.loads(msg_str)
-				except:
-					msg             = {}
-					msg['type']     = "DONE"
-					msg['content']  = ''
-
-				# respond based on type
-				# receive update from client
-				if (msg['type'] == 'SENDUPDATE'):
-					update = msg['content']
-					# update the folder based on client update
-					# some functions are from osutil.py
-
-					# delete 
-					if update['deleted']:
-						osutil.removefiles(PATH, update['deleted'])
-						print '- DELETED :' + str(update['deleted'])
-
-					# update and create basicly same
-					if update['created']:
-						for _file in update['created']:
-
-							# request the file
-							reqmsg              = {}
-							reqmsg['type']      = 'REQFILES'
-							reqmsg['content']   = _file
-
-							conn.send(json.dumps(reqmsg))
-
-							# create subdirectory if needed
-							_dir = os.path.dirname(_file)
-							if _dir:
-								osutil.createdir(PATH, _dir)
-
-							# write the file for each packet sent (1024 bytes each)
-							_f          = open(os.path.join(PATH, _file), 'w+b')
-							_datasize   = int(conn.recv(1024))                      # get data size
-							_dataget    = 0
-							while _dataget < _datasize:                             # there is data left to get
-								_data = conn.recv(1024)                             # acquire next packet
-								print "DATA RECEIVED :", _data
-								_f.write(_data)                                     # write in binaries
-
-								_dataget += 1024 
-
-							 # end writing file
-							_f.close()
-
-						print '- CREATED :' + str(update['created'])
-
-					# update and create basicly same
-					if update['updated']:
-						for _file in update['updated']:
-							# request the file
-							reqmsg              = {}
-							reqmsg['type']      = 'REQFILES'
-							reqmsg['content']   = _file
-
-							conn.send(json.dumps(reqmsg))
-
-							# create subdirectory if needed
-							_dir = os.path.dirname(_file)
-							if _dir:
-								osutil.createdir(PATH, _dir)
-
-							# write the file for each packet sent (1024 bytes each)
-							_f          = open(os.path.join(PATH, _file), 'w+b')
-							_datasize   = int(conn.recv(1024))                      # get data size
-							_dataget    = 0
-							while _dataget < _datasize:                             # there is data left to get
-								_data = conn.recv(1024)                             # acquire next packet
-								_f.write(_data)                                     # write in binaries
-
-								_dataget += 1024
-
-							 # end writing file
-							_f.close()
-
-						print '- UPDATED :' + str(update['updated'])
-
-					# delete directories
-					if update['deleted_dirs']:
-						print '- DELETED DIRS :' + str(update['deleted_dirs'])
-						osutil.removedirs(PATH, update['deleted_dirs'])
-
-					# send DONE respond to inform client 
-					msg             = {}
-					msg['type']     = 'DONE'
-					msg['content']  = ''
-
-					conn.send(json.dumps(msg))
-
-				# receive update from client
-				elif (msg['type'] == 'CHECKUPDATE'):
-					servercontent = osutil.index(PATH)
-					difference = osutil.diff(servercontent, msg['content'])
-
-					for x in difference: 
-						if difference[x]:
-							print 'Update on server detected!'
-							sendupdate(difference, conn)
-							break
-					msg             = {}
-					msg['type']     = 'DONE'
-					msg['content']  = ''
-
-					conn.send(json.dumps(msg))
-
 		# response request
 		while True:
 			conn, addr = s.accept()
 			print 'Connection from ' + addr[0] + ':' + str(addr[1])
 
-			# create thread 
+			# create thread
 			thread.start_new_thread(clientthread, (conn,))
 	except KeyboardInterrupt:
 		print('\nKeyboard interrupt detected. Exiting gracefully...\n')

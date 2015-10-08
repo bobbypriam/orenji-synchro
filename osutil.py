@@ -19,7 +19,7 @@ def removedirs(path, dirs):
 	for _dir in dirs:
 
 		# remove separator
-		if _dir[-1] == os.path.sep: 
+		if _dir[-1] == os.path.sep:
 			_dir = _dir[:-1]
 
 		# nuke the files!
@@ -37,7 +37,7 @@ def removedirs(path, dirs):
 			os.rmdir(os.path.join(path, _dir))
 		except:
 			pass
-			
+
 
 # create directory if isn't exist
 def createdir(path, directory):
@@ -54,7 +54,7 @@ def index(path):
 	subdirs = []
 	for root, dirs, filenames in os.walk(path):
 		for subdir in dirs:
-			try: 
+			try:
 				subdirs.append(os.path.relpath(os.path.join(root, subdir), path))
 			except OSError:
 				pass
@@ -62,7 +62,7 @@ def index(path):
 			try:
 				files.append(os.path.relpath(os.path.join(root, f), path))
 			except OSError:
-				pass    
+				pass
 	index = {}
 	for f in files:
 		try:
@@ -85,15 +85,3 @@ def diff(dir_base, dir_cmp):
 		except:
 			pass
 	return data
-
-# if sys.platform.lower().startswith('linux') :
-# 	import fcntl
-# 	import struct
-
-# 	def get_ip_address(ifname):
-# 	    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-# 	    return socket.inet_ntoa(fcntl.ioctl(
-# 	        s.fileno(),
-# 	        0x8915,  # SIOCGIFADDR
-# 	        struct.pack('256s', ifname[:15])
-# 	    )[20:24])
